@@ -1,0 +1,67 @@
+body{
+    background-color: lightblue;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+h1 {
+    background-color: whitesmoke;
+    font-weight: bolder;
+    color: darkblue;
+    font-size: 70px;
+    text-align: center;
+}
+
+.FavPlaces {
+    color:#494848;
+    text-align: center;
+    font-size: 30px;
+    padding-left: 0;
+    list-style-position: outside;
+    margin: 0 auto;
+    display: table;
+    text-align: left;
+
+}
+.FavPlacesHeader{
+    color:#494848;
+    text-align: center;
+    font-size: 45px;
+
+
+}
+
+.youtubeVid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+}
+
+h3 {
+   color: #494848;
+    text-align: center;
+    font-size: 50px;
+
+
+}
+
+.tableauPlaceholder {
+    display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0; /* Remove left/right padding */
+  overflow-x: hidden; /* Prevent horizontal scroll */
+
+}
+
+img{
+    display:block;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.caption{
+    font-size: 30px;
+    text-align: center;
+    color: #494848;
+}

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jumping Duck Game</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    #game {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #duck {
+      position: absolute;
+      bottom: 50px;
+      left: 100px;
+      font-size: 64px;
+      transition: transform 0.5s;
+    }
+
+    .obstacle {
+      position: absolute;
+      bottom: 50px;
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+    }
+
+    .obstacle.stack {
+      height: 100px;
+    }
+
+    #score, #highScore {
+      position: absolute;
+      top: 20px;
+      font-size: 24px;
+      color: black;
+    }
+
+    #score {
+      left: 20px;
+    }
+
+    #highScore {
+      left: 160px;
+    }
+
+    #startScreen, #gameOver {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: white;
+    }
+
+    #startScreen p {
+  font-size: 18px;
+  margin-top: 10px;
+  color: black; /* Ensure the text is always visible */
+}
+
+
+    .game-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 20px;
+      background-color: #FFD700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .game-button:hover {
+      background-color: #e6c200;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: random;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <div id="duck">🐥</div>
+    <div id="score">Score: 0</div>
+    <div id="highScore">High Score: 0</div>
+
+    <div id="startScreen">
+        <h1>Jumping Duck Game 🐥</h1>
+        <p>Press <strong>Space Bar</strong> to jump</p>
+        <button id="startBtn" class="game-button">Start Game</button>
+    </div>      
+
+    <div id="gameOver" style="display:none;">
+      <h1>Game Over</h1>
+      <button id="restartBtn" class="game-button">Start Over</button>
+    </div>
+  </div>
+
+  <header>
+    <nav style="position: absolute; top: 0; right: 0; padding: 10px;">
+      <a href="scratch.html" style="text-decoration: none; font-family: Arial, Helvetica, sans-serif; background-color: #FFD700; padding: 8px 12px; border-radius: 8px; color: black;">Go to Scratch</a>
+    </nav>
+  </header>
+
+  <script>
+    const duck = document.getElementById('duck');
+    const game = document.getElementById('game');
+    const scoreEl = document.getElementById('score');
+    const highScoreEl = document.getElementById('highScore');
+    const startScreen = document.getElementById('startScreen');
+    const gameOverEl = document.getElementById('gameOver');
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+
+    let isGameOver = false;
+    let score = 0;
+    let highScore = 0;
+    let gameSpeed = 7;
+    let lastObstacleTime = 0;
+    let lastObstacleX = 0;
+
+    let jumpCount = 0;
+    let velocity = 0;
+    let gravity = -0.6;
+    let position = 50;
+    let jumpForce = 12;
+    let jumping = false;
+
+    const backgroundColors = ['#D6A7FF', '#A8D3FF', '#FFC0CB', '#FFDBA9', '#C7FFCC'];
+    let currentBackgroundIndex = 0;
+
+    const obstacleColors = ['#FFD700', '#FF5733', '#33FF57', '#3357FF', '#FF33A8'];
+
+    function setBackgroundColor() {
+      document.body.style.backgroundColor = backgroundColors[currentBackgroundIndex % backgroundColors.length];
+    }
+
+    function jump() {
+      if (jumpCount >= 2 || isGameOver) return;
+      velocity = jumpForce;
+      jumpCount++;
+      if (!jumping) {
+        jumping = true;
+        requestAnimationFrame(applyJump);
+      }
+    }
+
+    function doubleJump() {
+      if (jumpCount === 2) {
+        duck.style.transform = 'rotate(360deg)';
+        setTimeout(() => {
+          duck.style.transform = 'rotate(0deg)';
+        }, 500);
+      }
+    }
+
+    function applyJump() {
+      if (isGameOver) return;
+
+      velocity += gravity;
+      position += velocity;
+
+      if (position <= 50) {
+        position = 50;
+        velocity = 0;
+        jumpCount = 0;
+        jumping = false;
+      } else {
+        requestAnimationFrame(applyJump);
+      }
+
+      duck.style.bottom = `${position}px`;
+    }
+
+    function createObstacle() {
+      const now = Date.now();
+      if (now - lastObstacleX < 800 + Math.random() * 400) return;
+      lastObstacleX = now;
+
+      const obs = document.createElement('div');
+      obs.classList.add('obstacle');
+      const color = obstacleColors[Math.floor(Math.random() * obstacleColors.length)];
+      obs.style.backgroundColor = color;
+
+      let isStacked = Math.random() < 0.3;
+      if (isStacked) {
+        obs.classList.add('stack');
+        obs.style.height = '100px';
+      }
+
+      let pos = window.innerWidth;
+      obs.style.left = `${pos}px`;
+      game.appendChild(obs);
+
+      const moveObs = setInterval(() => {
+        if (isGameOver) {
+          clearInterval(moveObs);
+          obs.remove();
+          return;
+        }
+
+        pos -= gameSpeed;
+        obs.style.left = `${pos}px`;
+
+        const duckRect = duck.getBoundingClientRect();
+        const obsRect = obs.getBoundingClientRect();
+
+        const collision =
+          obsRect.left < duckRect.right - 20 &&
+          obsRect.right > duckRect.left + 20 &&
+          obsRect.bottom > duckRect.top + 20 &&
+          obsRect.top < duckRect.bottom;
+
+        if (collision) {
+          clearInterval(moveObs);
+          endGame();
+        }
+
+        if (pos < -50) {
+          clearInterval(moveObs);
+          obs.remove();
+          score++;
+          scoreEl.innerText = `Score: ${score}`;
+
+          if (score > highScore) {
+            highScore = score;
+            highScoreEl.innerText = `High Score: ${highScore}`;
+          }
+
+          if (score % 5 === 0) {
+            currentBackgroundIndex++;
+            setBackgroundColor();
+          }
+
+          if (score % 100 === 0) {
+            shootConfetti();
+          }
+        }
+      }, 20);
+    }
+
+    function shootConfetti() {
+      const colors = ['#FF5733', '#33FF57', '#3357FF', '#FF33A8', '#FFD700'];
+      for (let i = 0; i < 100; i++) {
+        const confetti = document.createElement('div');
+        confetti.classList.add('confetti');
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+        const startX = Math.random() * window.innerWidth;
+        const startY = Math.random() * window.innerHeight;
+
+        confetti.style.left = `${startX}px`;
+        confetti.style.bottom = `${startY}px`;
+
+        const speedX = Math.random() * 10 - 5;
+        const speedY = Math.random() * 10 - 5;
+
+        game.appendChild(confetti);
+
+        setTimeout(() => {
+          confetti.remove();
+        }, 2000);
+
+        const moveConfetti = setInterval(() => {
+          confetti.style.left = `${parseFloat(confetti.style.left) + speedX}px`;
+          confetti.style.bottom = `${parseFloat(confetti.style.bottom) + speedY}px`;
+        }, 20);
+      }
+    }
+
+    function startGame() {
+      isGameOver = false;
+      score = 0;
+      gameSpeed = 7;
+      lastObstacleX = 0;
+
+      jumpCount = 0;
+      velocity = 0;
+      position = 50;
+      jumping = false;
+      duck.style.bottom = '50px';
+
+      scoreEl.innerText = `Score: 0`;
+      startScreen.style.display = 'none';
+      gameOverEl.style.display = 'none';
+      document.querySelectorAll('.obstacle').forEach(o => o.remove());
+
+      setBackgroundColor();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function endGame() {
+      isGameOver = true;
+      gameOverEl.style.display = 'block';
+    }
+
+    function gameLoop(timestamp) {
+      if (isGameOver) return;
+
+      if (timestamp - lastObstacleTime > 500 + Math.random() * 500) {
+        createObstacle();
+        lastObstacleTime = timestamp;
+      }
+
+      if (score % 5 === 0 && score !== 0) {
+        gameSpeed += 0.002;
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space') {
+        jump();
+        doubleJump();
+      }
+    });
+
+    startBtn.addEventListener('click', startGame);
+    restartBtn.addEventListener('click', startGame);
+  </script>
+</body>
+</html>
